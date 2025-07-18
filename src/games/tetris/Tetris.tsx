@@ -83,6 +83,58 @@ export default function Tetris() {
         if (!testCollision) {
           setBlock(testBlock);
         }
+      } else if (e.code === "Space") {
+        e.preventDefault(); // 스페이스바 스크롤 방지
+
+        let dropY = position.y;
+        while (!isCollision(position.x, dropY + 1)) {
+          dropY++;
+        }
+
+        const newFixed = fixedBoard.map((row) => [...row]);
+
+        block.shape.forEach((row, dy) =>
+          row.forEach((cell, dx) => {
+            if (cell) {
+              const y = dropY + dy;
+              const x = position.x + dx;
+              if (y >= 0 && y < BOARD_HEIGHT && x >= 0 && x < BOARD_WIDTH) {
+                newFixed[y][x] = { filled: true, color: block.color };
+              }
+            }
+          })
+        );
+
+        // 줄 삭제 + 점수
+        const { board: clearedBoard, cleared } = clearFullRows(newFixed);
+        setFixedBoard(clearedBoard);
+        setScore((prev) => prev + cleared * 100);
+
+        // 새 블록 생성
+        const nextBlock =
+          TETROMINOS[Math.floor(Math.random() * TETROMINOS.length)];
+        const nextPosition = { x: 3, y: 0 };
+
+        const isBlocked = nextBlock.shape.some((row, dy) =>
+          row.some((cell, dx) => {
+            if (!cell) return false;
+            const y = nextPosition.y + dy;
+            const x = nextPosition.x + dx;
+            return (
+              y >= BOARD_HEIGHT ||
+              x < 0 ||
+              x >= BOARD_WIDTH ||
+              (y >= 0 && clearedBoard[y][x].filled)
+            );
+          })
+        );
+
+        if (isBlocked) {
+          setIsGameOver(true);
+        } else {
+          setBlock(nextBlock);
+          setPosition(nextPosition);
+        }
       }
     },
     [block, position, fixedBoard]
