@@ -261,7 +261,9 @@ export default function Tetris() {
     <div className="min-h-screen bg-gray-900 text-white flex flex-col items-center justify-center p-4">
       <h1 className="text-3xl font-bold mb-4">🧱 TETRIS</h1>
       <h2 className="text-xl mb-2">Level: {level}</h2>
-      <h2 className="text-xl font-semibold mb-2">Score: {score}</h2>
+      <h2 className="text-xl font-semibold mb-2" translate="no">
+        Score: {score}
+      </h2>
       <div
         className="grid"
         style={{
