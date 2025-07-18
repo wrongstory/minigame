@@ -174,7 +174,6 @@ export default function Tetris() {
       if (!isCollision(position.x, nextY)) {
         setPosition((prev) => ({ ...prev, y: nextY }));
       } else {
-        // 블록 고정
         const newFixed = fixedBoard.map((row) => [...row]);
         block.shape.forEach((row, dy) =>
           row.forEach((cell, dx) => {
@@ -188,12 +187,22 @@ export default function Tetris() {
           })
         );
 
-        // 줄 삭제
         const { board: clearedBoard, cleared } = clearFullRows(newFixed);
         setFixedBoard(clearedBoard);
-        setScore((prev) => prev + cleared * 100);
 
-        // 새 블록 생성
+        setScore((prev) => {
+          const newScore = prev + cleared * 100;
+          const newLevel = Math.floor(newScore / 1000) + 1;
+
+          if (newLevel !== level) {
+            setLevel(newLevel);
+            const newSpeed = Math.max(100, 500 - (newLevel - 1) * 50);
+            setDropInterval(newSpeed);
+          }
+
+          return newScore;
+        });
+
         const nextBlock =
           TETROMINOS[Math.floor(Math.random() * TETROMINOS.length)];
         const nextPosition = { x: 3, y: 0 };
@@ -220,10 +229,10 @@ export default function Tetris() {
           setPosition(nextPosition);
         }
       }
-    }, 500);
+    }, dropInterval); // ✅ 여기도 반영해야 함!
 
     return () => clearInterval(interval);
-  }, [position, block, fixedBoard, isGameOver, dropInterval]);
+  }, [position, block, fixedBoard, isGameOver, dropInterval, level]); // ✅ level도 의존성에 추가
 
   // 렌더링용 합성 보드
   const mergedBoard = createEmptyBoard();
