@@ -15,6 +15,7 @@ export default function Tetris() {
   const [block, setBlock] = useState(TETROMINOS[0]);
   const [position, setPosition] = useState({ x: 3, y: 0 });
   const [fixedBoard, setFixedBoard] = useState(createEmptyBoard());
+  const [score, setScore] = useState(0);
 
   // 충돌 감지
   const isCollision = (x: number, y: number) => {
@@ -31,6 +32,18 @@ export default function Tetris() {
         );
       })
     );
+  };
+
+  const clearFullRows = (board: typeof fixedBoard) => {
+    const newBoard = board.filter((row) => row.some((cell) => !cell.filled));
+    const cleared = BOARD_HEIGHT - newBoard.length;
+    const emptyRows = Array.from({ length: cleared }, () =>
+      Array(BOARD_WIDTH).fill({ filled: false, color: "" })
+    );
+    return {
+      board: [...emptyRows, ...newBoard],
+      cleared,
+    };
   };
 
   // 키 입력
@@ -87,7 +100,6 @@ export default function Tetris() {
         if (!isCollision(prev.x, nextY)) {
           return { ...prev, y: nextY };
         } else {
-          // 고정 로직
           const newFixed = fixedBoard.map((row) => [...row]);
           block.shape.forEach((row, dy) =>
             row.forEach((cell, dx) => {
@@ -100,7 +112,12 @@ export default function Tetris() {
               }
             })
           );
-          setFixedBoard(newFixed);
+
+          // ✅ 줄 삭제 + 점수 증가
+          const { board: clearedBoard, cleared } = clearFullRows(newFixed);
+          setFixedBoard(clearedBoard);
+          setScore((prev) => prev + cleared * 100);
+
           setBlock(TETROMINOS[Math.floor(Math.random() * TETROMINOS.length)]);
           return { x: 3, y: 0 };
         }
@@ -136,6 +153,7 @@ export default function Tetris() {
   return (
     <div className="min-h-screen bg-gray-900 text-white flex flex-col items-center justify-center p-4">
       <h1 className="text-3xl font-bold mb-4">🧱 TETRIS</h1>
+      <h2 className="text-xl font-semibold mb-2">Score: {score}</h2>
       <div
         className="grid"
         style={{
