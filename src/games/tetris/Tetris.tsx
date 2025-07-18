@@ -1,6 +1,8 @@
 import { useState, useEffect, useCallback } from "react";
 import { TETROMINOS } from "./blocks";
 import { rotate } from "./utils";
+import { useIsMobile } from "../../hooks/useIsMobile";
+import MobileControls from "../../components/MobileControls";
 
 const BOARD_WIDTH = 10;
 const BOARD_HEIGHT = 20;
@@ -18,6 +20,57 @@ export default function Tetris() {
   const [isGameOver, setIsGameOver] = useState(false);
   const [level, setLevel] = useState(1);
   const [dropInterval, setDropInterval] = useState(500); // 기본 0.5초
+  const isMobile = useIsMobile();
+
+  const moveLeft = () => {
+    setPosition((prev) => {
+      const newX = prev.x - 1;
+      return isCollision(newX, prev.y) ? prev : { ...prev, x: newX };
+    });
+  };
+
+  const moveRight = () => {
+    setPosition((prev) => {
+      const newX = prev.x + 1;
+      return isCollision(newX, prev.y) ? prev : { ...prev, x: newX };
+    });
+  };
+
+  const dropOne = () => {
+    setPosition((prev) => {
+      const newY = prev.y + 1;
+      return isCollision(prev.x, newY) ? prev : { ...prev, y: newY };
+    });
+  };
+
+  const hardDrop = () => {
+    let y = position.y;
+    while (!isCollision(position.x, y + 1)) y++;
+    setPosition({ ...position, y }); // or trigger lock-in
+  };
+
+  const rotateBlock = () => {
+    const rotated = rotate(block.shape);
+    const testBlock = { ...block, shape: rotated };
+
+    const testCollision = rotated.some((row, dy) =>
+      row.some((cell, dx) => {
+        if (!cell) return false;
+        const newY = position.y + dy;
+        const newX = position.x + dx;
+        return (
+          newY >= BOARD_HEIGHT ||
+          newX < 0 ||
+          newX >= BOARD_WIDTH ||
+          (newY >= 0 && fixedBoard[newY][newX].filled)
+        );
+      })
+    );
+
+    if (!testCollision) {
+      setBlock(testBlock);
+    }
+  };
 
   // 하단 충돌 감지
   const isCollision = (x: number, y: number) => {
@@ -174,7 +227,6 @@ export default function Tetris() {
       if (!isCollision(position.x, nextY)) {
         setPosition((prev) => ({ ...prev, y: nextY }));
       } else {
-        // 블록 고정
         const newFixed = fixedBoard.map((row) => [...row]);
         block.shape.forEach((row, dy) =>
           row.forEach((cell, dx) => {
@@ -188,12 +240,22 @@ export default function Tetris() {
           })
         );
 
-        // 줄 삭제
         const { board: clearedBoard, cleared } = clearFullRows(newFixed);
         setFixedBoard(clearedBoard);
-        setScore((prev) => prev + cleared * 100);
 
-        // 새 블록 생성
+        setScore((prev) => {
+          const newScore = prev + cleared * 100;
+          const newLevel = Math.floor(newScore / 1000) + 1;
+
+          if (newLevel !== level) {
+            setLevel(newLevel);
+            const newSpeed = Math.max(100, 500 - (newLevel - 1) * 50);
+            setDropInterval(newSpeed);
+          }
+
+          return newScore;
+        });
+
         const nextBlock =
           TETROMINOS[Math.floor(Math.random() * TETROMINOS.length)];
         const nextPosition = { x: 3, y: 0 };
@@ -220,10 +282,10 @@ export default function Tetris() {
           setPosition(nextPosition);
         }
       }
-    }, 500);
+    }, dropInterval); // ✅ 여기도 반영해야 함!
 
     return () => clearInterval(interval);
-  }, [position, block, fixedBoard, isGameOver, dropInterval]);
+  }, [position, block, fixedBoard, isGameOver, dropInterval, level]); // ✅ level도 의존성에 추가
 
   // 렌더링용 합성 보드
   const mergedBoard = createEmptyBoard();
@@ -252,12 +314,15 @@ export default function Tetris() {
     <div className="min-h-screen bg-gray-900 text-white flex flex-col items-center justify-center p-4">
       <h1 className="text-3xl font-bold mb-4">🧱 TETRIS</h1>
       <h2 className="text-xl mb-2">Level: {level}</h2>
-      <h2 className="text-xl font-semibold mb-2">Score: {score}</h2>
+      <h2 className="text-xl font-semibold mb-2" translate="no">
+        Score: {score}
+      </h2>
       <div
         className="grid"
         style={{
-          gridTemplateColumns: `repeat(${BOARD_WIDTH}, 30px)`,
-          gridTemplateRows: `repeat(${BOARD_HEIGHT}, 30px)`,
+          gridTemplateColumns: `repeat(${BOARD_WIDTH}, minmax(20px, 1fr))`,
+          gridTemplateRows: `repeat(${BOARD_HEIGHT}, 20px)`,
+          maxWidth: "95vw",
           gap: "1px",
           backgroundColor: "#333",
         }}
@@ -271,6 +336,16 @@ export default function Tetris() {
           />
         ))}
       </div>
+      {/* ✅ 가상 버튼: 게임판 아래 */}
+      {isMobile && !isGameOver && (
+        <MobileControls
+          moveLeft={moveLeft}
+          moveRight={moveRight}
+          rotateBlock={rotateBlock}
+          dropOne={dropOne}
+          hardDrop={hardDrop}
+        />
+      )}
       {isGameOver && (
         <div className="absolute inset-0 bg-black bg-opacity-80 flex flex-col items-center justify-center text-center z-50">
           <h2 className="text-4xl font-bold text-red-500 mb-4">💀 GAME OVER</h2>
