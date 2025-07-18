@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { TETROMINOS } from "./blocks";
+import { rotate } from "./utils";
 
 const BOARD_WIDTH = 10;
 const BOARD_HEIGHT = 20;
