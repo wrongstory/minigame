@@ -17,6 +17,8 @@ export default function Tetris() {
   const [fixedBoard, setFixedBoard] = useState(createEmptyBoard());
   const [score, setScore] = useState(0);
   const [isGameOver, setIsGameOver] = useState(false);
+  const [level, setLevel] = useState(1);
+  const [dropInterval, setDropInterval] = useState(500); // 기본 0.5초
 
   // 하단 충돌 감지
   const isCollision = (x: number, y: number) => {
@@ -114,7 +116,19 @@ export default function Tetris() {
         // 줄 삭제 + 점수
         const { board: clearedBoard, cleared } = clearFullRows(newFixed);
         setFixedBoard(clearedBoard);
-        setScore((prev) => prev + cleared * 100);
+
+        setScore((prev) => {
+          const newScore = prev + cleared * 100;
+          const newLevel = Math.floor(newScore / 1000) + 1;
+
+          if (newLevel !== level) {
+            setLevel(newLevel);
+            const newSpeed = Math.max(100, 500 - (newLevel - 1) * 50);
+            setDropInterval(newSpeed);
+          }
+
+          return newScore;
+        });
 
         // 새 블록 생성
         const nextBlock =
@@ -151,7 +165,7 @@ export default function Tetris() {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [handleKeyDown]);
 
-  // 중력 작동
+  // 블록 하강 작동
   useEffect(() => {
     if (isGameOver) return;
 
@@ -210,7 +224,7 @@ export default function Tetris() {
     }, 500);
 
     return () => clearInterval(interval);
-  }, [position, block, fixedBoard, isGameOver]);
+  }, [position, block, fixedBoard, isGameOver, dropInterval]);
 
   // 렌더링용 합성 보드
   const mergedBoard = createEmptyBoard();
@@ -238,6 +252,7 @@ export default function Tetris() {
   return (
     <div className="min-h-screen bg-gray-900 text-white flex flex-col items-center justify-center p-4">
       <h1 className="text-3xl font-bold mb-4">🧱 TETRIS</h1>
+      <h2 className="text-xl mb-2">Level: {level}</h2>
       <h2 className="text-xl font-semibold mb-2">Score: {score}</h2>
       <div
         className="grid"
