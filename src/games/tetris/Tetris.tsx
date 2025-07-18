@@ -50,6 +50,12 @@ export default function Tetris() {
   // 키 입력
   const handleKeyDown = useCallback(
     (e: KeyboardEvent) => {
+      // ⛔ 기본 스크롤 방지
+      if (
+        ["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", " "].includes(e.key)
+      ) {
+        e.preventDefault();
+      }
       setPosition((prev) => {
         let newPos = { ...prev };
 
