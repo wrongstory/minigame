@@ -311,18 +311,24 @@ export default function Tetris() {
   );
 
   return (
-    <div className="min-h-screen bg-gray-900 text-white flex flex-col items-center justify-center p-4">
-      <h1 className="text-3xl font-bold mb-4">🧱 TETRIS</h1>
-      <h2 className="text-xl mb-2">Level: {level}</h2>
-      <h2 className="text-xl font-semibold mb-2" translate="no">
-        Score: {score}
-      </h2>
+    <div className="relative h-dvh w-full overflow-hidden bg-gray-900 text-white flex flex-col items-center justify-center px-4 py-6">
+      {/* ✅ 헤더 */}
+      <div className="text-center mb-4">
+        <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold">
+          🧱 TETRIS
+        </h1>
+        <h2 className="text-base sm:text-lg">Level: {level}</h2>
+        <h2 className="text-base sm:text-lg font-semibold" translate="no">
+          Score: {score}
+        </h2>
+      </div>
+
+      {/* ✅ 게임 보드 (반응형) */}
       <div
-        className="grid"
+        className="grid w-full max-w-[min(90vw,400px)]"
         style={{
-          gridTemplateColumns: `repeat(${BOARD_WIDTH}, minmax(20px, 1fr))`,
-          gridTemplateRows: `repeat(${BOARD_HEIGHT}, 20px)`,
-          maxWidth: "95vw",
+          gridTemplateColumns: `repeat(${BOARD_WIDTH}, 1fr)`,
+          aspectRatio: `${BOARD_WIDTH} / ${BOARD_HEIGHT}`,
           gap: "1px",
           backgroundColor: "#333",
         }}
@@ -330,7 +336,7 @@ export default function Tetris() {
         {mergedBoard.flat().map((cell, i) => (
           <div
             key={i}
-            className={`w-[30px] h-[30px] border border-gray-700 ${
+            className={`border border-gray-700 ${
               cell.filled ? cell.color : "bg-gray-800"
             }`}
           />
@@ -347,8 +353,10 @@ export default function Tetris() {
         />
       )}
       {isGameOver && (
-        <div className="absolute inset-0 bg-black bg-opacity-80 flex flex-col items-center justify-center text-center z-50">
-          <h2 className="text-4xl font-bold text-red-500 mb-4">💀 GAME OVER</h2>
+        <div className="absolute inset-0 bg-black/80 flex flex-col items-center justify-center text-center z-50 p-4">
+          <h2 className="text-2xl sm:text-4xl text-red-500 font-bold mb-4">
+            💀 GAME OVER
+          </h2>
           <button
             className="bg-white text-black px-6 py-2 rounded hover:bg-gray-200"
             onClick={() => {

@@ -18,7 +18,7 @@ export default function MobileControls({
   };
 
   return (
-    <div className="mt-6 grid grid-cols-3 gap-2 w-full max-w-xs">
+    <div className="mt-6 w-full max-w-xs grid grid-cols-3 gap-2">
       <button
         onClick={() => {
           vibrate();
