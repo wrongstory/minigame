@@ -11,7 +11,6 @@ const createEmptyBoard = () =>
   );
 
 export default function Tetris() {
-  const [board, setBoard] = useState(createEmptyBoard());
   const [block, setBlock] = useState(TETROMINOS[0]);
   const [position, setPosition] = useState({ x: 3, y: 0 });
   const [fixedBoard, setFixedBoard] = useState(createEmptyBoard());
@@ -59,7 +58,7 @@ export default function Tetris() {
         e.preventDefault();
       }
       setPosition((prev) => {
-        let newPos = { ...prev };
+        const newPos = { ...prev };
 
         if (e.key === "ArrowLeft") newPos.x--;
         else if (e.key === "ArrowRight") newPos.x++;
