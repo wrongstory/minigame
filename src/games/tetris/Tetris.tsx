@@ -36,7 +36,8 @@ export default function Tetris() {
   const handleKeyDown = useCallback(
     (e: KeyboardEvent) => {
       setPosition((prev) => {
-        const newPos = { ...prev };
+        let newPos = { ...prev };
+
         if (e.key === "ArrowLeft") newPos.x--;
         else if (e.key === "ArrowRight") newPos.x++;
         else if (e.key === "ArrowDown") newPos.y++;
@@ -44,8 +45,32 @@ export default function Tetris() {
         if (!isCollision(newPos.x, newPos.y)) return newPos;
         return prev;
       });
+
+      // 🔁 회전 키
+      if (e.key === "ArrowUp") {
+        const rotatedShape = rotate(block.shape);
+        const testBlock = { ...block, shape: rotatedShape };
+
+        const testCollision = rotatedShape.some((row, dy) =>
+          row.some((cell, dx) => {
+            if (!cell) return false;
+            const newY = position.y + dy;
+            const newX = position.x + dx;
+            return (
+              newY >= BOARD_HEIGHT ||
+              newX < 0 ||
+              newX >= BOARD_WIDTH ||
+              (newY >= 0 && fixedBoard[newY][newX]?.filled)
+            );
+          })
+        );
+
+        if (!testCollision) {
+          setBlock(testBlock);
+        }
+      }
     },
-    [block, isCollision]
+    [block, position, fixedBoard]
   );
 
   useEffect(() => {
