@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { TETROMINOS } from "./blocks";
 import { rotate } from "./utils";
 import { useIsMobile } from "../../hooks/useIsMobile";
@@ -21,6 +21,105 @@ export default function Tetris() {
   const [level, setLevel] = useState(1);
   const [dropInterval, setDropInterval] = useState(500); // 기본 0.5초
   const isMobile = useIsMobile();
+
+  // 자동하강 참조
+  const positionRef = useRef(position);
+  const blockRef = useRef(block);
+  const boardRef = useRef(fixedBoard);
+
+  // 상태 변경 시 ref 갱신
+  useEffect(() => {
+    positionRef.current = position;
+  }, [position]);
+
+  useEffect(() => {
+    blockRef.current = block;
+  }, [block]);
+
+  useEffect(() => {
+    boardRef.current = fixedBoard;
+  }, [fixedBoard]);
+
+  const drop = () => {
+    const pos = positionRef.current;
+    const blk = blockRef.current;
+    const board = boardRef.current;
+
+    const nextY = pos.y + 1;
+
+    const isCol = blk.shape.some((row, dy) =>
+      row.some((cell, dx) => {
+        if (!cell) return false;
+        const y = nextY + dy;
+        const x = pos.x + dx;
+        return (
+          y >= BOARD_HEIGHT ||
+          x < 0 ||
+          x >= BOARD_WIDTH ||
+          (y >= 0 && board[y][x]?.filled)
+        );
+      })
+    );
+
+    if (!isCol) {
+      setPosition({ ...pos, y: nextY });
+      return;
+    }
+
+    // 고정
+    const newFixed = board.map((row) => [...row]);
+    blk.shape.forEach((row, dy) =>
+      row.forEach((cell, dx) => {
+        if (cell) {
+          const y = pos.y + dy;
+          const x = pos.x + dx;
+          if (y >= 0 && y < BOARD_HEIGHT && x >= 0 && x < BOARD_WIDTH) {
+            newFixed[y][x] = { filled: true, color: blk.color };
+          }
+        }
+      })
+    );
+
+    const { board: clearedBoard, cleared } = clearFullRows(newFixed);
+    setFixedBoard(clearedBoard);
+
+    setScore((prev) => {
+      const newScore = prev + cleared * 100;
+      const newLevel = Math.floor(newScore / 1000) + 1;
+
+      if (newLevel !== level) {
+        setLevel(newLevel);
+        const newSpeed = Math.max(100, 500 - (newLevel - 1) * 50);
+        setDropInterval(newSpeed);
+      }
+
+      return newScore;
+    });
+
+    const nextBlock = TETROMINOS[Math.floor(Math.random() * TETROMINOS.length)];
+    const nextPos = { x: 3, y: 0 };
+
+    const blocked = nextBlock.shape.some((row, dy) =>
+      row.some((cell, dx) => {
+        if (!cell) return false;
+        const y = nextPos.y + dy;
+        const x = nextPos.x + dx;
+        return (
+          y >= BOARD_HEIGHT ||
+          x < 0 ||
+          x >= BOARD_WIDTH ||
+          (y >= 0 && clearedBoard[y][x].filled)
+        );
+      })
+    );
+
+    if (blocked) {
+      setIsGameOver(true);
+    } else {
+      setBlock(nextBlock);
+      setPosition(nextPos);
+    }
+  };
 
   const moveLeft = () => {
     setPosition((prev) => {
@@ -222,70 +321,11 @@ export default function Tetris() {
     if (isGameOver) return;
 
     const interval = setInterval(() => {
-      const nextY = position.y + 1;
-
-      if (!isCollision(position.x, nextY)) {
-        setPosition((prev) => ({ ...prev, y: nextY }));
-      } else {
-        const newFixed = fixedBoard.map((row) => [...row]);
-        block.shape.forEach((row, dy) =>
-          row.forEach((cell, dx) => {
-            if (cell) {
-              const y = position.y + dy;
-              const x = position.x + dx;
-              if (y >= 0 && y < BOARD_HEIGHT && x >= 0 && x < BOARD_WIDTH) {
-                newFixed[y][x] = { filled: true, color: block.color };
-              }
-            }
-          })
-        );
-
-        const { board: clearedBoard, cleared } = clearFullRows(newFixed);
-        setFixedBoard(clearedBoard);
-
-        setScore((prev) => {
-          const newScore = prev + cleared * 100;
-          const newLevel = Math.floor(newScore / 1000) + 1;
-
-          if (newLevel !== level) {
-            setLevel(newLevel);
-            const newSpeed = Math.max(100, 500 - (newLevel - 1) * 50);
-            setDropInterval(newSpeed);
-          }
-
-          return newScore;
-        });
-
-        const nextBlock =
-          TETROMINOS[Math.floor(Math.random() * TETROMINOS.length)];
-        const nextPosition = { x: 3, y: 0 };
-
-        const isBlocked = nextBlock.shape.some((row, dy) =>
-          row.some((cell, dx) => {
-            if (!cell) return false;
-            const y = nextPosition.y + dy;
-            const x = nextPosition.x + dx;
-            return (
-              y >= BOARD_HEIGHT ||
-              x < 0 ||
-              x >= BOARD_WIDTH ||
-              (y >= 0 && clearedBoard[y][x].filled)
-            );
-          })
-        );
-
-        if (isBlocked) {
-          setIsGameOver(true);
-          clearInterval(interval);
-        } else {
-          setBlock(nextBlock);
-          setPosition(nextPosition);
-        }
-      }
+      drop();
     }, dropInterval); // 여기도 반영해야 함!
 
     return () => clearInterval(interval);
-  }, [position, block, fixedBoard, isGameOver, dropInterval, level]); // ✅ level도 의존성에 추가
+  }, [dropInterval, isGameOver]); // level도 의존성에 추가 => 의존성 최소화
 
   // 렌더링용 합성 보드
   const mergedBoard = createEmptyBoard();
