@@ -104,7 +104,7 @@ export default function Tetris() {
   // 키 입력
   const handleKeyDown = useCallback(
     (e: KeyboardEvent) => {
-      // ⛔ 기본 스크롤 방지
+      // 기본 스크롤 방지
       if (
         ["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", " "].includes(e.key)
       ) {
@@ -121,7 +121,7 @@ export default function Tetris() {
         return prev;
       });
 
-      // 🔁 회전 키
+      // 회전 키
       if (e.key === "ArrowUp") {
         const rotatedShape = rotate(block.shape);
         const testBlock = { ...block, shape: rotatedShape };
@@ -282,7 +282,7 @@ export default function Tetris() {
           setPosition(nextPosition);
         }
       }
-    }, dropInterval); // ✅ 여기도 반영해야 함!
+    }, dropInterval); // 여기도 반영해야 함!
 
     return () => clearInterval(interval);
   }, [position, block, fixedBoard, isGameOver, dropInterval, level]); // ✅ level도 의존성에 추가
@@ -312,7 +312,7 @@ export default function Tetris() {
 
   return (
     <div className="relative h-dvh w-full overflow-hidden bg-gray-900 text-white flex flex-col items-center justify-center px-4 py-6">
-      {/* ✅ 헤더 */}
+      {/* 헤더 */}
       <div className="text-center mb-4">
         <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold">
           🧱 TETRIS
@@ -323,7 +323,7 @@ export default function Tetris() {
         </h2>
       </div>
 
-      {/* ✅ 게임 보드 (반응형) */}
+      {/* 게임 보드 (반응형) */}
       <div
         className="grid w-full max-w-[min(90vw,400px)]"
         style={{
@@ -342,7 +342,7 @@ export default function Tetris() {
           />
         ))}
       </div>
-      {/* ✅ 가상 버튼: 게임판 아래 */}
+      {/* 가상 버튼: 게임판 아래 */}
       {isMobile && !isGameOver && (
         <MobileControls
           moveLeft={moveLeft}
