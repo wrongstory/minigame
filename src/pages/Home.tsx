@@ -4,7 +4,7 @@ const games = [
   {
     name: "Tetris",
     path: "tetris",
-    image: "src/assets/ChatGPT_terris_Image.png",
+    image: "public/ChatGPT_terris_Image.png",
   },
   {
     name: "Snake",
