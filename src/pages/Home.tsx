@@ -4,7 +4,7 @@ const games = [
   {
     name: "Tetris",
     path: "tetris",
-    image: "https://via.placeholder.com/300x450.png?text=TETRIS",
+    image: "src/assets/ChatGPT_terris_Image.png",
   },
   {
     name: "Snake",
